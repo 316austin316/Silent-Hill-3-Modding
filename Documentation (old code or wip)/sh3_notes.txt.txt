@@ -1,0 +1,304 @@
+SILENT HILL 3 ARC FILE FORMAT
+-----------------------------
+The .arc files contain various game data such as textures, sounds, and other resources. These files have a file signature of "PACK".
+The format uses a simple directory table at the beginning of the file to store the offsets and sizes of the individual files. ARC files consist of two parts: a header and a body. The header is always 16 bytes and contains metadata about the archive. The body is a set of files stored sequentially after the header.
+The .arc file format does not include file extensions for the files contained within it. Most textures within the .arc file are stored uncompressed. 
+The following is the format of the ARC file used by Silent Hill 3:
+
+FILE HEADER
+  Byte   Length    Name
+  ----------------------
+  0      4 bytes   File signature ("FFFFFFFF")
+  4      4 bytes   Total number of files
+  8      8 bytes   Unknown 
+  
+FILE TABLE
+  16     n bytes   Directory table
+                     For each file:
+                       0-3   Offset of file data from start of archive
+                       4-7   Unknown - seems to be a file ID or index
+                       8-11  File size
+                       12-15 Length - the length of the file in bytes (seems to be identical to file size)
+  n      n bytes   File data
+
+Note that all values are little-endian.
+
+SCRIPT FOR QUICKBMS
+-------------------
+
+The following is a QuickBMS script that can be used to extract files from the ARC file:
+
+  # Silent Hill 3
+  # script for QuickBMS http://quickbms.aluigi.org
+
+  get DUMMY long
+  get FILES long
+  getdstring DUMMY 8
+
+  # Loop through the directory table and extract the files
+  for i = 0 < FILES
+      get OFFSET long
+      get DUMMY long
+      get SIZE long
+      get XSIZE long
+      log "" OFFSET SIZE
+  next i
+
+To extract the files in the correct order, use this updated QuickBMS script, it will give you the files in correct order, however some files will be empty due to the Silent Hill 3 stores its files:
+
+  # Silent Hill 3
+  # script for QuickBMS http://quickbms.aluigi.org
+
+  get DUMMY long
+  get FILES long
+  getdstring DUMMY 8
+
+  # Loop through the directory table and store the offsets in an array
+  set OFFSETS[FILES] long
+  for i = 0 < FILES
+      get OFFSETS[i] long
+      get DUMMY long
+      get SIZE long
+      get XSIZE long
+  next i
+
+  # Sort the offsets in ascending order
+  for i = 0 < FILES-1
+      for j = i+1 < FILES
+          if OFFSETS[j] < OFFSETS[i]
+              math TEMP = OFFSETS[i]
+              set OFFSETS[i] OFFSETS[j]
+              set OFFSETS[j] TEMP
+          endif
+      next j
+  next i
+
+  # Loop through the sorted offsets and extract the files
+  for i = 0 < FILES
+      get OFFSET long OFFSETS[i]
+      get DUMMY long
+      get SIZE long
+      get XSIZE long
+      log "" OFFSET SIZE
+  next i
+
+Texture Header:
+Offset Size Type Description
+0x00 0x04 uint32 Unknown (Always 0x02)
+0x04 0x04 uint32 Texture width
+0x08 0x04 uint32 Texture height
+0x0C 0x04 uint32 Unknown (Always 0x01)
+0x10 0x04 uint32 Unknown (Always 0x40)
+0x14 0x04 uint32 Texture size (excluding header)
+
+Texture Data:
+The texture data immediately follows the header and has a length specified in the header.
+
+There is no padding between textures, so it is possible for the end of one texture's data to overlap with the start of the next texture's header. Therefore, it is important to use the header information to determine the start and end of each texture.
+
+
+
+
+
+
+
+SCRIPT FOR QUICKBMS
+
+The following is a QuickBMS script that can be used to extract DDS files from the game:
+# Silent Hill 3 DDS
+# script for QuickBMS http://quickbms.aluigi.org
+
+endian little
+
+get SIGNATURE long
+get HEADER_SIZE long
+get FLAGS long
+get HEIGHT long
+get WIDTH long
+get LINEARSIZE long
+get DEPTH long
+get MIPMAPCOUNT long
+get PIXELFORMAT_SIZE long
+get PIXELFORMAT_FLAGS long
+get FOURCC long
+get RGBBITCOUNT long
+get RBITMASK long
+get GBITMASK long
+get BBITMASK long
+get ABITMASK long
+get CAPS long
+get TEXTURESTAGE long
+get UNKNOWN long
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+getdstring DUMMY 4
+
+log "" 128 LINEARSIZE
+
+
+Note that the above script only extracts the pixel data of the DDS file, and doesn't convert it to an image format.
+
+
+
+here is some github repositories and such that may help more:
+https://github.com/KDTX/Silent-Hill-3-Texture-Exporter: This repository contains a tool to extract textures from Silent Hill 3's .dat files.
+https://github.com/arghlex/Silent-Hill-3-Textures: This repository contains various texture assets extracted from Silent Hill 3, including environment textures and character models.
+
+
+https://github.com/pdelvo/silent-hill-3-pc-utilities: A collection of utilities for modding Silent Hill 3 on PC, including a texture editor.
+
+
+
+https://github.com/l3g0b0y/silent-hill-3: A modding guide and toolset for Silent Hill 3 on PC, including a texture extractor and packer.
+
+
+https://github.com/kevinmoran/silenthill3analysis: Contains research and analysis of various aspects of SH3, including file formats, textures, sound, and more.
+https://github.com/AlchemicRose/sh3tools: A collection of tools for SH3 modding, including texture extraction and conversion utilities. 
+https://github.com/sh3revival/sh3-revival: A project focused on rebuilding SH3 using modern game engines and assets, including textures. The repository includes various tools and utilities for extracting and processing SH3 assets.  
+https://github.com/MetalluK/Silent-Hill-3-Bink-Video-Tool:  A tool for extracting and converting Bink video files used in SH3. While not directly related to texture data, it may be useful for researchers analyzing other aspects of SH3's assets.
+ Silent Hill 3 Technical Information" by Fungo: This website provides a comprehensive overview of the technical aspects of Silent Hill 3, including information on the game's texture formats. It includes examples of texture headers, and explains how to interpret them. You can find it here: https://www.silenthillmemories.net/creators/technical_information_en.htm
+
+"Silent Hill 3 Texture Guide" by Adeno: This guide provides a detailed breakdown of the various texture formats used in Silent Hill 3, along with information on how to extract and modify them. It includes examples of texture headers, and provides explanations of each field. You can find it here: https://www.gamefaqs.com/pc/561820-silent-hill-3/faqs/26219
+
+"Silent Hill 3 Texture Compression Analysis" by Raccoon: This article provides an in-depth analysis of the texture compression techniques used in Silent Hill 3, and compares them to other games of the era. It includes technical details on how the textures are compressed, and provides examples of uncompressed textures. You can find it here: https://www.raccoonhq.com/reverse-engineering/silent-hill-3-texture-compression-analysis/
+Silent Hill 2/3 Texture Tool (https://github.com/emoose/Silent-Hill-2-3-Texture-Tool): This tool can extract and view textures from Silent Hill 2 and 3 files. It supports DDS, BMP, and TGA formats and can display DXT1, DXT3, and DXT5 compressed textures. The source code is also available on the repository.
+
+
+DTX2DDS (https://github.com/Kingcom/DTX2DDS): This tool can convert DTX textures (used in Silent Hill 2 and 3) to DDS format. The source code is available on the repository.
+https://github.com/maksimKorzh/sh3util
+https://github.com/krystalgamer/sh3util
+
+https://github.com/elishacloud/sh3-tools/tree/master/sh3util : most up to date version of sh3util
+
+    https://github.com/monkeyman192/Silent-Hill-Texture-Toolkit: A set of tools for extracting and converting Silent Hill textures, including source code for reading and writing the texture header.
+
+    https://github.com/WRSilence/Silent-Hill-3-Texture-Viewer: A texture viewer for Silent Hill 3 that includes source code for parsing and rendering textures.
+
+    https://github.com/moebiusmania/SilentHill3TextureTool: A command-line tool for extracting and converting Silent Hill 3 textures, including source code for reading and writing the texture header.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SH3 PS2?:
+Texture Data:
+
+Silent Hill 3 uses DDS format for its textures.
+The textures are stored in files with the extensions ".tex" or ".dtex".
+The textures are organized in a texture atlas or "texture page", which is a larger texture that contains multiple smaller textures. The positions and dimensions of each texture on the atlas can be found in a separate ".tpage" file.
+Compression:
+
+Silent Hill 3 uses DXT3 and DXT5 compression for its textures.
+DXT3 compression uses a 4x4 pixel block, with 64 bits per block.
+DXT5 compression uses a 4x4 pixel block, with 128 bits per block.
+Both compression types use a 2:1 compression ratio.
+Pixel Format:
+
+DXT3 compression uses a 16-bit RGB format, with 5 bits for red, 6 bits for green, and 5 bits for blue.
+DXT5 compression uses a 16-bit RGBA format, with 5 bits for red, 6 bits for green, 5 bits for blue, and 8 bits for alpha.
+
+
+# Silent Hill 3 PS2 Texture Format
+
+This document describes the format of textures used in the PlayStation 2 version of Silent Hill 3.
+
+## .TIM File Format
+
+Silent Hill 3 uses the .TIM file format for storing textures. Each .TIM file contains a header and the raw image data for a single texture. The header has a fixed size of 16 bytes and contains the following fields:
+
+| Offset | Size | Description |
+|--------|------|-------------|
+| 0x00   | 1    | Version (always 0x10) |
+| 0x01   | 1    | Bits per pixel (4 or 8) |
+| 0x02   | 1    | Palette mode (0 = no palette, 1 = 16-entry palette, 2 = 256-entry palette) |
+| 0x03   | 1    | Pixel mode (0 = uncompressed, 1 = compressed) |
+| 0x04   | 4    | Palette offset (0 for no palette) |
+| 0x08   | 4    | Data offset |
+| 0x0C   | 2    | Width |
+| 0x0E   | 2    | Height |
+
+The palette offset field specifies the offset from the beginning of the file to the palette data. The data offset field specifies the offset to the raw image data. The width and height fields specify the dimensions of the image in pixels.
+
+### Palette Data
+
+If the palette mode field is non-zero, the texture has a palette that maps pixel values to RGB colors. The palette data immediately follows the header and has a size of either 32 or 512 bytes, depending on the palette mode. Each entry in the palette is either 16 or 24 bits, depending on the number of entries in the palette. The palette format is the same for both 16- and 256-entry palettes:
+
+| Offset | Size | Description |
+|--------|------|-------------|
+| 0x00   | 1    | Red component |
+| 0x01   | 1    | Green component |
+| 0x02   | 1    | Blue component |
+| 0x03   | 1    | Alpha component (if present) |
+
+The components are in the range 0-255 and are stored in little-endian byte order.
+
+### Image Data
+
+If the pixel mode field is 0, the image data immediately follows the palette data and has a size of `width * height * bpp / 8` bytes, where `bpp` is the number of bits per pixel. The data is stored row-by-row from top to bottom.
+
+If the pixel mode field is 1, the image data is compressed using a simple run-length encoding scheme. Each row of pixels is compressed independently. The compressed data immediately follows the palette data and has a variable length. The compression format is as follows:
+
+1. Read one byte from the compressed data. If the byte is 0, the row is finished and the next row begins. If the byte is greater than 0, it represents a run of uncompressed pixels. The next `byte + 1` bytes are copied verbatim from the compressed data to the output image.
+2. Read one byte from the compressed data. If the byte is negative, it represents a run of compressed pixels. The next `-(byte - 1)` bytes are copied from a fixed-length buffer to the output image. The fixed-length buffer contains the most recent 16 uncompressed pixels in the current row.
+3. If the byte is positive, it represents a run of compressed pixels. The next byte + 1 bytes are copied from a fixed-length buffer to the output image.
+
+The fixed-length buffer contains the most recent 16 uncompressed pixels in the current row. If there are not enough pixels in the buffer, it is filled with zeroes.
+
+For example, suppose we have the following row of pixels (in hexadecimal):
+
+12 34 56 78 9A BC DE F0
+
+The compressed data for this row might look like this:
+
+08 12 34 56 78 9A BC DE F0
+FD 04
+01
+
+This corresponds to the following uncompressed pixels:
+
+12 34 56 78 9A BC DE F0 12 34 56 78 9A BC DE F0 12
+
+The first byte, 08, indicates that there are 8 uncompressed pixels in the row. The next 8 bytes are copied verbatim from the compressed data.
+
+The next byte, FD, indicates that there are 4 compressed pixels in the row. The next -(FD-1) bytes (i.e., 5 bytes) are copied from the fixed-length buffer. The fixed-length buffer contains the 16 most recent uncompressed pixels in the row, so the compressed pixels are BC DE F0 12.
+
+The final byte, 01, indicates that there is 1 compressed pixel in the row. The next 01 + 1 bytes (i.e., 2 bytes) are copied from the fixed-length buffer. The compressed pixel is 34.
+Tools
+
+Several tools are available for working with Silent Hill 3 textures:
+
+    sh3util: A Python library for reading and writing Silent Hill 3 textures.
+    Silent Hill 3 Texture Tool: A Windows GUI tool for viewing and exporting Silent Hill 3 textures.
+    TexMod: A tool for modding textures in DirectX 9 games. Can be used to extract and replace textures in Silent Hill 3.
+
+References
+
+    The Unofficial SH2 and SH3 modding guide
+    Gamasutra - Silent Hill 3: The Art of Darkness
+
+
+https://github.com/samclee/Silent-Hill-3-PS2-Hacking: Contains research and tools for hacking the PS2 version of SH3, including texture extraction and editing. 
