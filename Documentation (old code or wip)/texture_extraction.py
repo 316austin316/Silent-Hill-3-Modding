@@ -12,8 +12,13 @@ filename = sys.argv[1]
 
 # open the specified .arc file in binary mode
 with open(filename, "rb") as f:
+    # search for the master header pattern
+    master_header_pattern = b"\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x20\x00\x00\x00"
+    data = f.read()
+    master_header_offset = data.find(master_header_pattern)
+        
     # seek to the first master header
-    f.seek(0x175b44)
+    f.seek(master_header_offset)
 
     # read the first master header
     master_header = f.read(0x20)
