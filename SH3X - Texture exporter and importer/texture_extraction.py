@@ -34,6 +34,8 @@ def extract_textures(filename):
                     header_size = 96
                 elif texture_header[12:16] == b"\x18\x30\x00\x00":
                     header_size = 96
+                elif texture_header[12:16] == b"\x08\x30\x00\x00":
+                    header_size = 96
                 elif texture_header[12:16] == b"\x18\x50\x00\x00":
                     header_size = 128
                 elif texture_header[12:16] == b"\x20\x50\x00\x00":

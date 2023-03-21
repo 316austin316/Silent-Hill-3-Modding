@@ -7,6 +7,8 @@ from tkinter import messagebox
 from PIL import Image
 import image_processing
 from image_processing import convert_bgra_to_rgba, convert_rgba_to_bgra, save_images, import_png
+import texture_analysis
+import pyglet.image.codecs.dds
 
 global file_path  # Define file_path as a global variable
 
@@ -44,6 +46,25 @@ def reimport_textures(root):
             reimport.import_textures(filename, png_dir)
             messagebox.showinfo("Import Complete", "Textures reimported successfully!")
 
+def analyze_textures(root):
+    filename = filedialog.askopenfilename(parent=root, title='Select a file')
+    if filename:
+        # analyze the textures from the file
+        textures = texture_analysis.analyze_textures(filename)
+
+        # display a message box with the analysis results
+        num_textures = len(textures)
+        messagebox.showinfo("Texture Analysis", f"{num_textures} textures analyzed!")
+        
+        # create a new directory to store the extracted textures as unswizzled images
+        output_dir = os.path.splitext(filename)[0] + "_textures"
+        os.makedirs(output_dir, exist_ok=True)
+
+        # convert and save the textures as .png images
+        texture_analysis.unswizzle_and_save(textures, output_dir)
+
+        messagebox.showinfo("Extraction Complete", f"{len(textures)} textures extracted and saved as unswizzled data to {output_dir}!")
+
 def main():
     global file_path  # Use the global file_path variable
     root = Tk()
@@ -60,6 +81,10 @@ def main():
     # add the reimport button
     reimport_button = Button(root, text="Reimport Textures", command=lambda: reimport_textures(root))
     reimport_button.pack(side=LEFT, padx=10, pady=10)
+
+    # add the analyze button
+    analyze_button = Button(root, text="Analyze Textures", command=lambda: analyze_textures(root))
+    analyze_button.pack(side=LEFT, padx=10, pady=10)
 
     root.mainloop()
 
