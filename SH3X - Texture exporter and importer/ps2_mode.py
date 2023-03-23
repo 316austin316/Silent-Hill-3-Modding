@@ -40,12 +40,14 @@ def analyze_textures(filename):
             # print the texture header values and offset
             print(f"  Width: {struct.unpack('<H', texture_header[8:10])[0]}")
             print(f"  Height: {struct.unpack('<H', texture_header[10:12])[0]}")
+            print(f" bpp: {struct.unpack('<B', texture_header[12:13])[0]}")
             print(f"  Data size: {struct.unpack('<I', texture_header[16:20])[0]}")
             print(f"  Total size: {struct.unpack('<I', texture_header[20:24])[0]}")
 
             # Parse the values from the texture header
             width = struct.unpack("<H", texture_header[8:10])[0]
             height = struct.unpack("<H", texture_header[10:12])[0]
+            bpp = struct.unpack("<B", texture_header[12:13])[0]
             data_size = struct.unpack("<I", texture_header[16:20])[0]
             total_size = struct.unpack("<I", texture_header[20:24])[0]
             data_offset = struct.unpack("<I", texture_header[4:8])[0]
@@ -68,9 +70,6 @@ def analyze_textures(filename):
             palette_data_offset = palette_header_offset + 0x30
             f.seek(palette_data_offset)
             palette_data = f.read(palette_data_size)
-            # Write the palette data to a separate file
-            with open(f"output/palette_{palette_data_offset:x}.bin", "wb") as palette_file:
-                palette_file.write(palette_data)
 
             # Move the file pointer to the start of the next texture header
             f.seek(palette_data_offset + palette_data_size)
@@ -79,6 +78,7 @@ def analyze_textures(filename):
                 "index": len(textures),
                 "width": width,
                 "height": height,
+                "bpp": bpp,
                 "data_size": data_size,
                 "data": texture_data,
                 "offset": texture_data_offset,
@@ -95,28 +95,33 @@ def analyze_textures(filename):
             # Write the texture data to a separate file
             with open(f"output/texture_{texture_data_offset:x}.bin", "wb") as texture_file:
                 texture_file.write(texture_data)
+            # Write the palette data to a separate file
+            with open(f"output/palette_{palette_data_offset:x}.bin", "wb") as palette_file:
+                palette_file.write(palette_data)
             # Find the next texture header
             texture_header_offset = data.find(texture_header_pattern, texture_header_offset + 1)
             if texture_header_offset == -1:
                 break
 
     return textures
-    
-def unswizzle_data(data, width, height):
-    unswizzled_data = bytearray(len(data))
+
+def unswizzle_8_to_32(p_in_texels, width, height):
+    p_swiz_texels = bytearray(width * height)
 
     for y in range(height):
         for x in range(width):
-            block_location = (y & (~0xf)) * width + (x & (~0xf)) * 2
+            block_location = (y & ~0xf) * width + (x & ~0xf) * 2
             swap_selector = (((y + 2) >> 2) & 0x1) * 4
-            posY = (((y & (~3)) >> 1) + (y & 1)) & 0x7
-            column_location = posY * width * 2 + ((x + swap_selector) & 0x7) * 4
+            pos_y = (((y & ~3) >> 1) + (y & 1)) & 0x7
+            column_location = pos_y * width * 2 + ((x + swap_selector) & 0x7) * 4
 
-            byte_num = ((y >> 1) & 1) + ((x >> 2) & 2)  # 0,1,2,3
+            byte_num = ((y >> 1) & 1) + ((x >> 2) & 2)  # 0, 1, 2, 3
 
-            unswizzled_data[y * width + x] = data[block_location + column_location + byte_num]
+            p_swiz_texels[y * width + x] = p_in_texels[block_location + column_location + byte_num]
 
-    return bytes(unswizzled_data)
+    return bytes(p_swiz_texels)
+
+
 
 def unswizzle_and_save(textures, output_dir):
     for texture in textures:
@@ -127,14 +132,18 @@ def unswizzle_and_save(textures, output_dir):
         palette_data = texture["palette_data"]
         num_palettes = texture["num_palettes"]
 
+        # Use the bpp value from the texture header
+        bpp = texture["bpp"]
+
         # Unswizzle the texture data
-        unswizzled_data = unswizzle_data(texture_data, width, height)
+        unswizzled_data = unswizzle_8_to_32(texture_data, width, height)
 
         # Convert the unswizzled data to an image
         image = Image.frombytes("L", (width, height), unswizzled_data)
 
-        # Save the image as a PNG file
-        output_path = os.path.join(output_dir, f"output_{filename}.png")
-        image.save(output_path, format="PNG")
+        # Save the image as a BMP file
+        output_path = os.path.join(output_dir, f"output_{filename}.bmp")
+        image.save(output_path, format="BMP")
 
     print(f"All textures unswizzled and saved to: {output_dir}")
+
