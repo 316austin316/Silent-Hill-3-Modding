@@ -60,10 +60,13 @@ def analyze_textures(root):
         output_dir = os.path.splitext(filename)[0] + "_textures"
         os.makedirs(output_dir, exist_ok=True)
 
-        # convert and save the textures as .png images
+        # convert and save the textures as .bmp
         ps2_mode.unswizzle_and_save(textures, output_dir)
+        
+        #convert greyscale to color
+        ps2_mode.apply_palette_to_textures(textures, output_dir)
 
-        messagebox.showinfo("Extraction Complete", f"{len(textures)} textures extracted and saved as unswizzled data to {output_dir}!")
+        messagebox.showinfo("Extraction Complete", f"{len(textures)} textures extracted and saved as unswizzled and colorized data to {output_dir}!")
 
 def main():
     global file_path  # Use the global file_path variable
