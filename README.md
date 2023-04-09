@@ -1,14 +1,33 @@
-# Silent-Hill-3-Modding
-This repo will be the hub for my Silent Hill 3 Modding Project.
+# Silent Hill 3 Modding
 
-Documentation: Shows old code and documentation on Silent Hill 3 (PC).
+This repository is the central hub for my Silent Hill 3 Modding Project.
 
-SH3X: A texture exporter and reimporter for silent hill 3 files. Works with multiple formats.
+## Documentation
 
-To Do:
-1. Update Documentation (remove incorrect info, organize it better)
-2. Add Texture viewer window to SH3X
-3. Support for 8bpp and 4bpp images (WIP) (8bpp swizzle works, 4bpp does not, palette data doesn't work at all)
+The documentation section contains old code and documentation for Silent Hill 3 on PC. I plan to update it by removing incorrect information and organizing it better.
+
+## SH3X
+
+SH3X is a tool for exporting and reimporting textures in multiple formats for Silent Hill 3. Currently, it supports .PNG and .bmp formats, but I plan to add support for more in the future.
+
+### Features
+
+- Texture exporter and reimporter for Silent Hill 3 files
+- Multiple format support (Currently .PNG and .bmp)
+- Texture viewer window (Coming soon!)
+- Work in progress support for 8bpp and 4bpp images (8bpp swizzle works, 4bpp does not, palette data doesn't work at all)
+
+## Issues
+
+Please report any issues or bugs to me so that I can quickly fix them.
+
+## To Do
+
+Here are some of the features that I plan to add to SH3X in the near future:
+
+1. Update Documentation
+2. Add Texture Viewer Window
+3. Support for 8bpp and 4bpp images (WIP)
 4. Support for Silent Hill 3 (PS2) Version (WIP)
-5. Also update readme to a more professional look
+5. Update the README to a more professional look
 6. Add support for more formats besides .PNG (.bmp already supported)
