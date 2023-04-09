@@ -196,24 +196,29 @@ def unswizzle_and_save(textures, output_dir):
 
     print(f"All textures unswizzled and saved to: {output_dir}")
 
-def combine_palettes_into_image(palette_data, num_palettes, output_path):
-    width = 512  # Assuming 256 colors per palette
-    height = 512
-    raw_bytes = bytearray(width * height * 4)  # 4 bytes per pixel (RGBA)
+def combine_palettes_into_image(palette_data, num_palettes, palette_index, output_path):
+    colors_per_palette = 256
+    colors_per_row = 16
+    color_size = 4
+    palette_section_size = colors_per_palette * color_size
 
-    for i in range(num_palettes):
-        palette_section_start = i * 1024
-        palette_section_end = palette_section_start + 1024
-        for j in range(palette_section_start, palette_section_end, 4):
-            b, g, r, a = palette_data[j:j+4]
-            x = (j - palette_section_start) // 4
-            y = i
-            idx = (y * width + x) * 4
-            raw_bytes[idx:idx+4] = r, g, b, a
+    width = colors_per_row * color_size
+    height = (colors_per_palette // colors_per_row)
+    combined_palette_image = Image.new("RGBA", (width, height))
 
-    # Save the raw bytes to a file
+    palette_section_start = palette_index * palette_section_size
+    palette_section_end = palette_section_start + palette_section_size
+    for j in range(palette_section_start, palette_section_end, color_size):
+        b, g, r, a = palette_data[j:j+color_size]
+        x = (j - palette_section_start) // color_size % colors_per_row
+        y = (j - palette_section_start) // (color_size * colors_per_row)
+        combined_palette_image.putpixel((x, y), (r, g, b, a))
+
     with open(output_path, "wb") as f:
-        f.write(raw_bytes)
+        f.write(combined_palette_image.tobytes())
+
+
+
 
 def apply_palette_to_textures(textures, output_dir):
     for texture in textures:
@@ -222,10 +227,6 @@ def apply_palette_to_textures(textures, output_dir):
         filename = texture["filename"]
         palette_data = texture["palette_data"]
         num_palettes = texture["num_palettes"]
-        
-        # Save the combined palette image
-        output_path = os.path.join(output_dir, f"combined_palette_{filename}.bin")
-        combine_palettes_into_image(palette_data, num_palettes, output_path)
 
         # Load the raw unswizzled data
         input_path = os.path.join(output_dir, f"raw_unswizzled_{filename}.bin")
@@ -237,7 +238,7 @@ def apply_palette_to_textures(textures, output_dir):
 
         # Convert the image mode to "P" (paletted)
         image = image.convert("P")
-
+        
         for i in range(num_palettes):
             # Extract the RGBA palette for the current section
             rgba_palette = []
@@ -247,20 +248,20 @@ def apply_palette_to_textures(textures, output_dir):
                 b, g, r, a = palette_data[j:j+4]
                 rgba_palette.extend([r, g, b, a])
 
-            # Apply the palette to the image
-            image.putpalette(rgba_palette, rawmode="RGBA")
+        # Apply the merged palette to the image
+        image.putpalette(rgba_palette, rawmode="RGBA")
 
-            # Convert the image to RGBA mode
-            colorized_image = image.convert("RGBA")
+        # Convert the image to RGBA mode
+        colorized_image = image.convert("RGBA")
 
-            # Save the raw data with applied palette
-            raw_data_with_palette = colorized_image.tobytes()
-            with open(os.path.join(output_dir, f"raw_with_palette_{filename}_color_palette{i}.bin"), "wb") as f:
-                f.write(raw_data_with_palette)
+        # Save the raw data with applied palette
+        raw_data_with_palette = colorized_image.tobytes()
+        with open(os.path.join(output_dir, f"raw_with_palette_{filename}.bin"), "wb") as f:
+            f.write(raw_data_with_palette)
 
-            # Save the image
-            output_path = os.path.join(output_dir, f"output_{filename}_color_palette{i}.bmp")
-            colorized_image.save(output_path, format="BMP")
+        # Save the image
+        output_path = os.path.join(output_dir, f"output_{filename}.bmp")
+        colorized_image.save(output_path, format="BMP")
 
     print(f"All textures have been colorized and saved to: {output_dir}")
 

@@ -24,69 +24,73 @@ def extract_textures(filename):
             print("Number of textures:", num_textures)
             print("Texture offset:", hex(texture_offset))
             print("Texture size:", hex(texture_size))
+            
+            if num_textures == 0:
+                # Skip the master header if there are no textures
+                f.seek(master_header_offset + 0x20)
+            else:
+                # Iterate over all textures in the section
+                for i in range(num_textures):
+                    # Read the texture header
+                    texture_header = f.read(0x20)
+                    # Check the pattern to determine the header size
+                    if texture_header[12:16] == b"\x20\x30\x00\x00":
+                        header_size = 96
+                    elif texture_header[12:16] == b"\x18\x30\x00\x00":
+                        header_size = 96
+                    elif texture_header[12:16] == b"\x08\x30\x00\x00":
+                        header_size = 96
+                    elif texture_header[12:16] == b"\x18\x50\x00\x00":
+                        header_size = 128
+                    elif texture_header[12:16] == b"\x20\x50\x00\x00":
+                        header_size = 128
+                    elif texture_header[12:16] == b"\x08\x20\x00\x00":
+                        header_size = 80
+                    else:
+                        header_size = 80
+                    # Calculate the offset of the texture header
+                    header_offset = f.tell() - 0x20
+                    # Read the remaining bytes of the texture header
+                    texture_header += f.read(header_size - 0x20)
+                    
+                    # print the texture header values and offset
+                    print(f"Texture header for texture {i}: {texture_header}")
+                    print(f"  Width: {struct.unpack('<H', texture_header[8:10])[0]}")
+                    print(f"  Height: {struct.unpack('<H', texture_header[10:12])[0]}")
+                    print(f"  Data size: {struct.unpack('<I', texture_header[16:20])[0]}")
+                    print(f"  Total size: {struct.unpack('<I', texture_header[20:24])[0]}")
 
-            # Iterate over all textures in the section
-            for i in range(num_textures):
-                # Read the texture header
-                texture_header = f.read(0x20)
-                # Check the pattern to determine the header size
-                if texture_header[12:16] == b"\x20\x30\x00\x00":
-                    header_size = 96
-                elif texture_header[12:16] == b"\x18\x30\x00\x00":
-                    header_size = 96
-                elif texture_header[12:16] == b"\x08\x30\x00\x00":
-                    header_size = 96
-                elif texture_header[12:16] == b"\x18\x50\x00\x00":
-                    header_size = 128
-                elif texture_header[12:16] == b"\x20\x50\x00\x00":
-                    header_size = 128
-                elif texture_header[12:16] == b"\x08\x20\x00\x00":
-                    header_size = 80
-                else:
-                    header_size = 80
-                # Calculate the offset of the texture header
-                header_offset = f.tell() - 0x20
-                # Read the remaining bytes of the texture header
-                texture_header += f.read(header_size - 0x20)
-                
-                # print the texture header values and offset
-                print(f"Texture header for texture {i}: {texture_header}")
-                print(f"  Width: {struct.unpack('<H', texture_header[8:10])[0]}")
-                print(f"  Height: {struct.unpack('<H', texture_header[10:12])[0]}")
-                print(f"  Data size: {struct.unpack('<I', texture_header[16:20])[0]}")
-                print(f"  Total size: {struct.unpack('<I', texture_header[20:24])[0]}")
+                    # Parse the values from the texture header
+                    width = struct.unpack("<H", texture_header[8:10])[0]
+                    height = struct.unpack("<H", texture_header[10:12])[0]
+                    data_size = struct.unpack("<I", texture_header[16:20])[0]
+                    total_size = struct.unpack("<I", texture_header[20:24])[0]
+                    data_offset = struct.unpack("<I", texture_header[4:8])[0]
 
-                # Parse the values from the texture header
-                width = struct.unpack("<H", texture_header[8:10])[0]
-                height = struct.unpack("<H", texture_header[10:12])[0]
-                data_size = struct.unpack("<I", texture_header[16:20])[0]
-                total_size = struct.unpack("<I", texture_header[20:24])[0]
-                data_offset = struct.unpack("<I", texture_header[4:8])[0]
-
-                # Read the texture data
-                texture_data_offset = f.tell()
-                f.seek(texture_data_offset)
-                texture_data = f.read(data_size)
-                # Create the output directory if it doesn't exist
-                if not os.path.exists("output"):
-                    os.mkdir("output")
-                # Write the texture data to a separate file
-                with open(f"output/texture_{texture_data_offset:x}.bin", "wb") as texture_file:
-                    texture_file.write(texture_data)
-                # Move the file pointer to the start of the next texture header
-                f.seek(texture_data_offset + data_size)
-                # Add the texture information to the list of textures
-                texture = {
-                    "index": i,
-                    "width": width,
-                    "height": height,
-                    "data_size": data_size,
-                    "data": texture_data,
-                    "offset": texture_data_offset,
-                    "total_size": total_size,
-                    "filename": f"texture_{texture_data_offset:x}.bin"
-                }
-                textures.append(texture)
+                    # Read the texture data
+                    texture_data_offset = f.tell()
+                    f.seek(texture_data_offset)
+                    texture_data = f.read(data_size)
+                    # Create the output directory if it doesn't exist
+                    if not os.path.exists("output"):
+                        os.mkdir("output")
+                    # Write the texture data to a separate file
+                    with open(f"output/texture_{texture_data_offset:x}.bin", "wb") as texture_file:
+                        texture_file.write(texture_data)
+                    # Move the file pointer to the start of the next texture header
+                    f.seek(texture_data_offset + data_size)
+                    # Add the texture information to the list of textures
+                    texture = {
+                        "index": i,
+                        "width": width,
+                        "height": height,
+                        "data_size": data_size,
+                        "data": texture_data,
+                        "offset": texture_data_offset,
+                        "total_size": total_size,
+                        "filename": f"texture_{texture_data_offset:x}.bin"
+                    }
+                    textures.append(texture)
             # Find the next master header
             master_header_offset = data.find(master_header_pattern, master_header_offset + 1)
             if master_header_offset == -1:
