@@ -53,12 +53,14 @@ def extract_textures(filename):
                 print(f"Texture header for texture {i}: {texture_header}")
                 print(f"  Width: {struct.unpack('<H', texture_header[8:10])[0]}")
                 print(f"  Height: {struct.unpack('<H', texture_header[10:12])[0]}")
+                print(f"  bpp: {struct.unpack('<B', texture_header[12:13])[0]}")
                 print(f"  Data size: {struct.unpack('<I', texture_header[16:20])[0]}")
                 print(f"  Total size: {struct.unpack('<I', texture_header[20:24])[0]}")
 
                 # Parse the values from the texture header
                 width = struct.unpack("<H", texture_header[8:10])[0]
                 height = struct.unpack("<H", texture_header[10:12])[0]
+                bpp = struct.unpack("<B", texture_header[12:13])[0]
                 data_size = struct.unpack("<I", texture_header[16:20])[0]
                 total_size = struct.unpack("<I", texture_header[20:24])[0]
                 data_offset = struct.unpack("<I", texture_header[4:8])[0]
@@ -80,6 +82,7 @@ def extract_textures(filename):
                     "index": i,
                     "width": width,
                     "height": height,
+                    "bpp": bpp,
                     "data_size": data_size,
                     "data": texture_data,
                     "offset": texture_data_offset,

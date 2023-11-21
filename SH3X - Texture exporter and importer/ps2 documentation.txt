@@ -1,0 +1,10 @@
+PS2:
+
+All ps2 textures are swizzled, either 8bpp or 4bpp.
+Seems like all textures are paletted too.. bummer
+
+with a few exceptions!
+aaa in pic folder is rgb32, rgba
+
+texture d4d8d0 
+palette_d8d900

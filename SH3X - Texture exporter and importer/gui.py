@@ -11,6 +11,11 @@ import ps2_mode
 import pyglet.image.codecs.dds
 from typing import List, Tuple
 import texture_extraction  # Added import for texture_extraction
+import batch_analysis
+import matplotlib.pyplot as plt
+import numpy as np
+import threading
+
 
 global file_path  # Define file_path as a global variable
 
@@ -44,39 +49,39 @@ def reimport_textures(root):
     if filename:
         png_dir = filedialog.askdirectory(parent=root, title='Select the directory containing the new PNG-encoded textures')
         if png_dir:
-            import reimport
-            reimport.import_textures(filename, png_dir)
-            messagebox.showinfo("Import Complete", "Textures reimported successfully!")
+            # Run the import_textures function in a separate thread
+            thread = threading.Thread(target=import_textures, args=(filename, png_dir))
+            thread.daemon = True  # This ensures the thread will close when the application closes
+            thread.start()
+            messagebox.showinfo("Reimport Started", "Texture reimport has started. You will be notified when it's finished.")
 
 def analyze_textures(root):
-    filename = filedialog.askopenfilename(parent=root, title='Select a file')
-    if filename:
-        # analyze the textures from the file
-        textures = ps2_mode.analyze_textures(filename)
-
+    filenames = filedialog.askopenfilenames(parent=root, title='Select files', filetypes=[("All files", "*.*")])
+    if filenames:
+        # Assuming you want to create the output directory based on the first selected file
+        first_filename = filenames[0]
+        textures = ps2_mode.analyze_textures(filenames)
         # display a message box with the analysis results
         num_textures = len(textures)
         messagebox.showinfo("Texture Analysis", f"{num_textures} textures analyzed!")
         
-        # For each texture, visualize its palette
-        for texture in textures:
-            ps2_mode.visualize_palette(texture["palette_data"], mode="RGBA")
-
-        # Display a message box with the results
-        num_palettes = len(textures)
-        messagebox.showinfo("Palette Visualization", f"{num_palettes} palettes visualized!")
-        
         # create a new directory to store the extracted textures as unswizzled images
-        output_dir = os.path.splitext(filename)[0] + "_textures"
+        output_dir = os.path.splitext(first_filename)[0] + "_textures"
         os.makedirs(output_dir, exist_ok=True)
 
-        # convert and save the textures as .bmp
+        # convert and save the textures as .png
         ps2_mode.unswizzle_and_save(textures, output_dir)
         
         #convert greyscale to color
         ps2_mode.apply_palette_to_textures(textures, output_dir)
 
         messagebox.showinfo("Extraction Complete", f"{len(textures)} textures extracted and saved as unswizzled and colorized data to {output_dir}!")
+        
+def batch_analyze_gui(root):
+    filenames = filedialog.askopenfilenames(parent=root, title='Select files', filetypes=[("All files", "*.*")])
+    if filenames:
+        batch_analysis.batch_analyze(filenames)
+        messagebox.showinfo("Batch Analysis Complete", f"Analyzed {len(filenames)} files!")
         
 def display_texture(textures, index):
     texture = textures[index]
@@ -152,12 +157,19 @@ def view_texture(root):
     if filename:
         textures = texture_extraction.extract_textures(filename)
         display_texture(textures, 0)  # Initially display the first texture
+        
+def visualize_palettes_gui(root):
+    filenames = filedialog.askopenfilenames(parent=root, title='Select files', filetypes=[("All files", "*.*")])
+    if filenames:
+        ps2_mode.visualize_palettes(filenames)  # Assuming ps2_mode is the module where visualize_palettes is defined
+        messagebox.showinfo("Palette Visualization Complete", f"Visualized palettes for {len(filenames)} files!")
+
 
 def main():
     global file_path  # Use the global file_path variable
     root = Tk()
     root.title("Silent Hill 3 Texture Extractor and Importer")
-    root.geometry("640x200")
+    root.geometry("900x200")
     file_path = ""
 
     import_button = Button(root, text="Convert to .bgra", command=lambda: import_file(root))
@@ -173,10 +185,16 @@ def main():
     # add the ps2_mode button
     analyze_button = Button(root, text="PS2_Mode", command=lambda: analyze_textures(root))
     analyze_button.pack(side=LEFT, padx=10, pady=10)
+    
+    visualize_palette_button = Button(root, text="Visualize Palettes", command=lambda: visualize_palettes_gui(root))
+    visualize_palette_button.pack(side=LEFT, padx=10, pady=10)
 
     # add the view texture button
     view_button = Button(root, text="Texture Viewer", command=lambda: view_texture(root))
     view_button.pack(side=LEFT, padx=10, pady=10)
+    
+    batch_analyze_button = Button(root, text="Batch Analyze", command=lambda: batch_analyze_gui(root))
+    batch_analyze_button.pack(side=LEFT, padx=10, pady=10)
 
     root.mainloop()
 
