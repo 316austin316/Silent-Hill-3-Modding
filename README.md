@@ -15,7 +15,7 @@ SH3X is a tool for exporting and reimporting textures in multiple formats for Si
 - Texture exporter and reimporter for Silent Hill 3 files (PC)
 - Multiple format support (Currently .PNG and .bmp)
 - Texture viewer window (kinda slow but works)
-- Work in progress support for 8bpp and 4bpp images (8bpp swizzle works, 4bpp does not, palette data doesn't work at all)
+- Work in progress support for 8bpp and 4bpp images (8bpp swizzle works, 4bpp does not, palette data working!)
 
 ## Issues
 
