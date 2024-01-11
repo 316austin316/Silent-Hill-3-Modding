@@ -1,6 +1,6 @@
 # Silent Hill 3 Modding
 
-This repository is the central hub for my Silent Hill 3 Modding Project.
+This repository is the central hub for Silent Hill 3 Documentation
 
 ## Documentation
 
