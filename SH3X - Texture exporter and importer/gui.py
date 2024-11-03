@@ -15,6 +15,7 @@ import batch_analysis
 import matplotlib.pyplot as plt
 import numpy as np
 import threading
+import ps2textures
 
 
 global file_path  # Define file_path as a global variable
@@ -71,17 +72,9 @@ def analyze_textures(root):
 
         # convert and save the textures as .png
         ps2_mode.unswizzle_and_save(textures, output_dir)
-        
-        #convert greyscale to color
-        ps2_mode.apply_palette_to_textures(textures, output_dir)
 
         messagebox.showinfo("Extraction Complete", f"{len(textures)} textures extracted and saved as unswizzled and colorized data to {output_dir}!")
         
-def batch_analyze_gui(root):
-    filenames = filedialog.askopenfilenames(parent=root, title='Select files', filetypes=[("All files", "*.*")])
-    if filenames:
-        batch_analysis.batch_analyze(filenames)
-        messagebox.showinfo("Batch Analysis Complete", f"Analyzed {len(filenames)} files!")
         
 def display_texture(textures, index):
     texture = textures[index]
@@ -157,12 +150,6 @@ def view_texture(root):
     if filename:
         textures = texture_extraction.extract_textures(filename)
         display_texture(textures, 0)  # Initially display the first texture
-        
-def visualize_palettes_gui(root):
-    filenames = filedialog.askopenfilenames(parent=root, title='Select files', filetypes=[("All files", "*.*")])
-    if filenames:
-        ps2_mode.visualize_palettes(filenames)  # Assuming ps2_mode is the module where visualize_palettes is defined
-        messagebox.showinfo("Palette Visualization Complete", f"Visualized palettes for {len(filenames)} files!")
 
 
 def main():
@@ -186,16 +173,11 @@ def main():
     analyze_button = Button(root, text="PS2_Mode", command=lambda: analyze_textures(root))
     analyze_button.pack(side=LEFT, padx=10, pady=10)
     
-    visualize_palette_button = Button(root, text="Visualize Palettes", command=lambda: visualize_palettes_gui(root))
-    visualize_palette_button.pack(side=LEFT, padx=10, pady=10)
 
     # add the view texture button
     view_button = Button(root, text="Texture Viewer", command=lambda: view_texture(root))
     view_button.pack(side=LEFT, padx=10, pady=10)
     
-    batch_analyze_button = Button(root, text="Batch Analyze", command=lambda: batch_analyze_gui(root))
-    batch_analyze_button.pack(side=LEFT, padx=10, pady=10)
-
     root.mainloop()
 
 if __name__ == "__main__":
